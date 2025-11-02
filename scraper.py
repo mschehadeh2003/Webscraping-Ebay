@@ -186,7 +186,7 @@ def scrape_product_page(url):
         return dict_item
 
     finally:
-        time.sleep(2)
+        time.sleep(3)
         driver.quit()
 
 
