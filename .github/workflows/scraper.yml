@@ -1,10 +1,10 @@
-name: Run eBay Tech Deals Automation
+name: eBay Tech Deals Full Automation
 
 on:
   schedule:
-    # Every 3 hours
+    # Every 3 hours (00:00, 03:00, 06:00, …)
     - cron: '0 */3 * * *'
-  workflow_dispatch:   # allow manual trigger
+  workflow_dispatch:   # manual trigger option
 
 jobs:
   automate:
@@ -27,24 +27,32 @@ jobs:
           python -m pip install --upgrade pip
           pip install selenium webdriver-manager pandas matplotlib seaborn notebook jupyterlab nbconvert
 
-      # 4️⃣ Run scraper.py (collects raw data)
+      # 4️⃣ Run scraper first
       - name: Run scraper
         run: python scraper.py
 
-      # 5️⃣ Run clean_data.py (cleans and merges new data)
-      - name: Clean new data
+      # 💤 Wait 40 minutes before cleaning (2400 seconds)
+      - name: Wait 40 minutes before cleaning
+        run: sleep 2400
+
+      # 5️⃣ Run cleaner
+      - name: Run clean_data.py
         run: python clean_data.py
 
-      # 6️⃣ Re-run EDA.ipynb to update analysis
+      # 💤 Wait 30 minutes before running EDA (1800 seconds)
+      - name: Wait 30 minutes before EDA
+        run: sleep 1800
+
+      # 6️⃣ Run EDA notebook (refresh visuals)
       - name: Run EDA notebook
         run: |
           jupyter nbconvert --to notebook --execute EDA.ipynb --output EDA.ipynb
 
-      # 7️⃣ Commit and push all updates (CSV + notebook)
+      # 7️⃣ Commit and push results
       - name: Commit and push changes
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add ebay_tech_deals.csv cleaned_ebay_deals.csv EDA.ipynb
-          git diff --quiet && git diff --staged --quiet || git commit -m "Auto-update: scraped, cleaned, and analyzed latest eBay Tech Deals"
+          git diff --quiet && git diff --staged --quiet || git commit -m "Automated run: scraped, cleaned, and updated EDA"
           git push
